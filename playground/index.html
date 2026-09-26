@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Rich Text Editor · Playground</title>
+    <style>
+      :root { color-scheme: light; }
+      body { margin: 0; font: 15px/1.5 system-ui, sans-serif; background: #f5f6f8; color: #1a1d23; }
+      header { padding: 20px 24px; background: #fff; border-bottom: 1px solid #e3e6eb; }
+      header h1 { margin: 0; font-size: 18px; }
+      header p { margin: 4px 0 0; color: #5b6270; }
+      nav { display: flex; gap: 4px; padding: 0 24px; background: #fff; border-bottom: 1px solid #e3e6eb; }
+      nav button { border: 0; background: none; padding: 10px 14px; font: inherit; cursor: pointer; color: #5b6270; border-bottom: 2px solid transparent; }
+      nav button[aria-selected="true"] { color: #1a1d23; border-bottom-color: #2563eb; font-weight: 600; }
+      main { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
+      section[hidden] { display: none; }
+      .card { background: #fff; border: 1px solid #e3e6eb; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+      .card h2 { margin: 0 0 4px; font-size: 15px; }
+      .card > p { margin: 0 0 12px; color: #5b6270; }
+      pre { margin: 0; max-height: 260px; overflow: auto; background: #0f172a; color: #e2e8f0; padding: 12px; border-radius: 6px; font-size: 12px; white-space: pre-wrap; word-break: break-all; }
+      .row { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+      .row button { font: inherit; padding: 6px 12px; border: 1px solid #cfd4dc; background: #fff; border-radius: 6px; cursor: pointer; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>@trodad/rich-text-editor</h1>
+      <p>Playground — edit src/ and the page hot-reloads.</p>
+    </header>
+    <nav role="tablist">
+      <button role="tab" data-tab="react" aria-selected="true">React component</button>
+      <button role="tab" data-tab="element">HTML element (no JS)</button>
+      <button role="tab" data-tab="mount">Mount API</button>
+      <button role="tab" data-tab="render">Read-only render</button>
+    </nav>
+    <main>
+      <section id="tab-react">
+        <div class="card">
+          <h2>&lt;RichTextEditor /&gt;</h2>
+          <p>For React apps. <code>onChange</code> receives both the HTML and the Plate value (debounced 250ms).</p>
+          <div id="react-root"></div>
+        </div>
+        <div class="card"><h2>HTML output</h2><pre id="react-out"></pre></div>
+        <div class="card"><h2>JSON output (Plate value)</h2><pre id="react-json"></pre></div>
+      </section>
+
+      <section id="tab-element" hidden>
+        <div class="card">
+          <h2>&lt;trodad-rich-text-editor&gt;</h2>
+          <p>What a server-rendered page writes — the stored HTML goes inside, escaped, and the form posts it under <code>name</code>. Add <code>format="json"</code> to post the Plate document instead.</p>
+          <form id="element-form">
+            <trodad-rich-text-editor name="body" min-height="320" placeholder="Write something…">&lt;h2 style="text-align: center"&gt;Quarterly update&lt;/h2&gt;&lt;p&gt;&lt;strong&gt;Revenue&lt;/strong&gt; grew &lt;span style="color: #16a34a"&gt;12%&lt;/span&gt; on the previous quarter.&lt;/p&gt;</trodad-rich-text-editor>
+            <div class="row">
+              <button type="submit">Submit (shows FormData)</button>
+              <button type="reset">Reset</button>
+            </div>
+          </form>
+        </div>
+        <div class="card"><h2>Posted value</h2><pre id="element-out">Submit the form to see what the server receives.</pre></div>
+      </section>
+
+      <section id="tab-mount" hidden>
+        <div class="card">
+          <h2>mount(selector, { textarea })</h2>
+          <p>For pages that already have a hidden textarea. The textarea is kept filled with HTML.</p>
+          <form id="mount-form">
+            <textarea id="mount-body" name="body" hidden>&lt;p&gt;Mounted onto an existing &lt;em&gt;textarea&lt;/em&gt;.&lt;/p&gt;</textarea>
+            <div id="mount-editor" class="rte-scope"></div>
+            <div class="row">
+              <button type="button" id="mount-get">getHtml()</button>
+              <button type="button" id="mount-set">setHtml(sample)</button>
+            </div>
+          </form>
+        </div>
+        <div class="card"><h2>Textarea value</h2><pre id="mount-out"></pre></div>
+      </section>
+
+      <section id="tab-render" hidden>
+        <div class="card">
+          <h2>content.css</h2>
+          <p>Saved HTML displayed read-only, inside <code>.rte-content</code>. Uses whatever the React tab currently holds.</p>
+          <div id="render-out" class="rte-content"></div>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="./main.tsx"></script>
+  </body>
+</html>
