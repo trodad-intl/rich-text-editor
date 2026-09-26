@@ -1,0 +1,42 @@
+<!doctype html>
+<!--
+  Plain HTML, no build step. After `pnpm build`, serve the repo root and open
+  /examples/plain-html/ (e.g. `npx serve .` or `python3 -m http.server`).
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rich Text Editor — plain HTML</title>
+  <link rel="stylesheet" href="../../dist/rich-text-editor.css">
+  <link rel="stylesheet" href="../../dist/content.css">
+  <script type="module" src="../../dist/standalone/rich-text-editor.js"></script>
+  <style>
+    body { font: 15px/1.5 system-ui, sans-serif; max-width: 900px; margin: 40px auto; padding: 0 16px; }
+    pre { background: #f4f4f5; padding: 12px; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>Plain HTML example</h1>
+
+  <form id="doc">
+    <trodad-rich-text-editor name="body" min-height="300">&lt;p&gt;Hello from a page with &lt;strong&gt;no build step&lt;/strong&gt;.&lt;/p&gt;</trodad-rich-text-editor>
+    <p><button type="submit">Submit</button></p>
+  </form>
+
+  <h2>Submitted HTML</h2>
+  <pre id="out">—</pre>
+
+  <h2>Rendered read-only</h2>
+  <div id="preview" class="rte-content"></div>
+
+  <script>
+    document.getElementById("doc").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const html = new FormData(e.target).get("body");
+      document.getElementById("out").textContent = html;
+      document.getElementById("preview").innerHTML = html; // trusted demo content only
+    });
+  </script>
+</body>
+</html>

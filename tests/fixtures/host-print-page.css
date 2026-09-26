@@ -1,0 +1,441 @@
+/*
+ * A real host print page — a server-rendered print view — extracted from its
+ * templates. print-parity.spec.ts renders saved HTML inside it,
+ * with dist/content.css on top, to prove the read-only rendering matches
+ * the editor even on a page that sets its own body font and sizes.
+ */
+body {
+            font-size: 15px !important;
+            font-family: Calibri, "Arial Narrow", Arial, sans-serif;
+        }
+
+        .main_data p {
+            margin: 0;
+            padding: 0;
+        }
+
+        @media print {
+
+            /* The printed page box + native A4 pagination that pins the signature
+               footer to the bottom of the printed page. Brings its own @page rule,
+               which is why this page no longer declares one.
+
+               A CSS comment rather than a template one because everything between the
+               style tags is parsed as CSS: a template comment here is a syntax error to
+               the IDE, and it took the rest of the stylesheet down with it. */
+            
+
+        /*
+         * THE PAGE FRAME.
+         *
+         * A page is one table: its head group carries the letterhead space and the
+         * header information, its foot group the signatures, and its single
+         * body cell the parameters. Chromium repeats a table's head and foot group on
+         * every printed sheet and reserves their space in the flow, which is what
+         * gives every page — not only the first and last — its header block at the
+         * top and its signatures at the bottom, with the parameters reflowing between
+         * them. It is the same thing Word does with a page header and footer.
+         *
+         * A table, rather than position:fixed, because a fixed element repeats but
+         * reserves NO space: the parameter rows printed straight through it.
+         *
+         * The host's print script gives the body cell a height of a whole number of
+         * pages, so the foot group also lands at the bottom of the LAST page rather
+         * than immediately under the final parameter.
+         */
+        .print_page_frame {
+            width: 100%;
+            border-collapse: collapse;
+            /*
+             * The frame is EXACTLY the printable width and is never stretched by what
+             * it carries. With the default auto layout a table cannot be narrower than
+             * its content, so one oversized element in the document body widened the whole
+             * frame — and with it the head and foot cells, pushing the header info and
+             * Test/Specimen boxes past the page edge, where the printer cut their right
+             * border off. A pasted MS-Word table only has to be a few pixels over (the
+             * real case was 721.2px of table against a 718.1px page) for that to happen.
+             * Fixed layout also gives the body cell a definite width, which is what lets
+             * the `max-width: 100%` on a pasted table finally shrink it to the page.
+             */
+            table-layout: fixed;
+        }
+
+        .print_page_frame>thead {
+            display: table-header-group;
+        }
+
+        .print_page_frame>tfoot {
+            display: table-footer-group;
+        }
+
+        .print_page_frame>thead>tr>td,
+        .print_page_frame>tfoot>tr>td,
+        .print_page_frame>tbody>tr>td {
+            padding: 0;
+            border: 0;
+            vertical-align: top;
+        }
+
+        .report_page {
+            position: relative;
+        }
+
+        .report_end_footer {
+            background: #fff;
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+
+        @media print {
+            /*
+             * The frame owns pagination now: the document itself is plain block flow,
+             * so nothing forces a height that could invent a page of its own.
+             */
+            .report_page,
+            .report_page>.print_page_frame>tbody>tr>td>.content {
+                display: block !important;
+                min-height: 0 !important;
+                height: auto !important;
+                overflow: visible !important;
+                box-sizing: border-box !important;
+                break-inside: auto !important;
+                page-break-inside: auto !important;
+            }
+
+            /* The head and foot groups must not be split down the middle. */
+            .print_page_frame>thead,
+            .print_page_frame>tfoot {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+            }
+
+            .report_footer_table {
+                margin: 0 !important;
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+            }
+
+            .report_footer_table td {
+                line-height: 1.05 !important;
+            }
+        }
+
+        /* If the user switches the print dialog to Landscape, an A4 page is 210mm
+           tall (not 297mm). Use that so the signature footer still sits at the page
+           bottom instead of forcing a portrait-tall page that spills over. Placed
+           after the @media print block so it overrides the portrait height. */
+        @media print and (orientation: landscape) {
+            :root {
+                --print-page-content-height: calc(210mm - 1in);
+            }
+
+            .report_page {
+                /* min-height: calc(210mm - 1in - 2mm); */
+            }
+        }
+
+        /*
+         * Native Chromium A4 pagination.
+         *
+         * Browser-native A4 layout. No CSS zoom or JavaScript scaling is used;
+         * both page layouts therefore render with the same physical width,
+         * margins, font size and header-information dimensions.
+         */
+        /* Read by the host's print script when it measures one printable page. */
+        :root {
+            --print-header-band: 0mm;
+            --print-footer-band: 0mm;
+        }
+
+        @page {
+            size: A4 portrait;
+            margin: 0mm 10mm 0mm;
+        }
+
+        
+            /*
+         * The band is reserved by the page margin above, on every page. The spacer
+         * that used to stand in for it at the top of the page would reserve it a
+         * SECOND time on page 1, and only there.
+         */
+            body.native-print-layout .header_section {
+                height: 0 !important;
+                min-height: 0 !important;
+                padding-top: 0 !important;
+                padding-bottom: 0 !important;
+            }
+        
+
+        
+            /*
+         * Same for the foot of the page: the copy inside the signature table would
+         * reserve the band again at the end of the page. Two selectors because the
+         * other page layout names its footer table differently.
+         */
+            body.native-print-layout .report_footer_table .footer_section,
+            body.native-print-layout .signature_table .footer_section {
+                min-height: 0 !important;
+                height: auto !important;
+            }
+        
+
+        body.native-print-layout {
+            width: 190mm !important;
+            max-width: 190mm !important;
+            margin: 0 auto !important;
+            padding: 0 !important;
+        }
+
+        /*
+         * JavaScript measures the page before window.print() opens, while
+         * normal screen media is still active. Mirror the size-affecting print
+         * rules during that measurement; otherwise the screen-only 3px cell
+         * padding is counted for every parameter row and a one-page document is
+         * incorrectly classified as two pages.
+         */
+        /*
+         * `:not(.rte-content)` on the three rules below.
+         *
+         * They are the host's own data table's — a fixed grid of rows whose
+         * gutter and line box this file owns, and which the measuring pass must see
+         * exactly as the printer will. A body saved by this editor is the opposite kind of
+         * content: its tables come from the document it was written in, and
+         * every one of their paddings, line heights and borders is written inline by
+         * the editor's serializer. These rules are `!important`, so they beat an
+         * inline style — a pasted table's `padding: 0cm 5.4pt` printed as
+         * `0 6px 0 0`, and its line box as the data grid's, which is precisely the
+         * drift the editor's content stylesheet exists to end. A page without the class
+         * (every other page) matches exactly as before.
+         */
+        body.native-print-layout .main_data:not(.rte-content) td,
+        body.native-print-layout .main_data:not(.rte-content) th {
+            /* Same gutter the print stylesheet gives a cell, so what is measured is
+               what is printed: the right padding is what a full reference value
+               needs to stay off the method beside it. */
+            padding: 0 6px 0 0 !important;
+            /*
+             * The cell takes the ROW's line-height, which is where a test's
+             * parameter_line_spacing and a parameter's own param_line_spacing are
+             * written. Setting a value on the cell instead — even the correct
+             * default — silently beat those inline row styles, because a cell's own
+             * declaration always wins over what it would inherit, so a configured
+             * line spacing never printed.
+             */
+            line-height: inherit !important;
+        }
+
+        /*
+         * The default the cells inherit: 1.1 is what every print stylesheet here
+         * gives a table cell. Measuring with the screen's taller line instead made
+         * each parameter row about a pixel too tall, which over forty rows added up
+         * to a page that did not exist — and a page counted as two pages is FORCED
+         * to be two, so it printed a sheet carrying only a repeated header and
+         * footer.
+         *
+         * Deliberately NOT !important: it is a default, so a row that carries its
+         * own line spacing must be able to override it, and an inline style does
+         * exactly that. Rows with no spacing configured measure and print at 1.1,
+         * the same as before.
+         */
+        body.native-print-layout .main_data:not(.rte-content) tr {
+            line-height: 1.2;
+        }
+
+        body.native-print-layout .main_data:not(.rte-content) tbody tr:first-child>td {
+            padding-top: 2px !important;
+        }
+
+        body.native-print-layout .main_data table {
+            border-collapse: collapse !important;
+        }
+
+        body.native-print-layout .report_footer_table {
+            margin: 0 !important;
+        }
+
+        body.native-print-layout .report_footer_table td {
+            line-height: 1.05 !important;
+        }
+
+        /*
+         * The measuring pass runs under screen media, so it has to see the same box
+         * the print does: a plain 190mm block whose height is whatever its frame
+         * needs. The frame's own body cell is what carries the page height, set by
+         * the host's print script.
+         */
+        body.native-print-layout .report_page {
+            position: relative !important;
+            display: block !important;
+            width: 190mm !important;
+            max-width: 190mm !important;
+            margin: 0 auto !important;
+            min-height: 0 !important;
+            height: auto !important;
+            overflow: visible !important;
+            break-inside: auto !important;
+            page-break-inside: auto !important;
+            box-sizing: border-box !important;
+        }
+
+        .report_page+.report_page {
+            break-before: page !important;
+            page-break-before: always !important;
+        }
+
+        .report_page.native-first-report {
+            break-before: auto !important;
+            page-break-before: auto !important;
+        }
+
+        @media print {
+
+            html,
+            body {
+                width: auto !important;
+                max-width: none !important;
+                height: auto !important;
+                min-height: 0 !important;
+                max-height: none !important;
+                overflow: visible !important;
+            }
+
+            body.native-print-layout {
+                width: auto !important;
+                max-width: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .report_page {
+                width: 190mm !important;
+                max-width: 190mm !important;
+                /* auto, not 0: the 190mm box only looks centred while the printable area
+                   is exactly 190mm, i.e. while the browser honours the @page margins.
+                   Print with "Margins: None/Minimum", a scale other than 100%, or a
+                   driver with its own hardware margins and the area is wider — with
+                   margin:0 the box hugged the LEFT edge and dumped all the slack on the
+                   right, which is the uneven white space users reported. auto splits
+                   whatever is left over equally, and is identical to 0 at a true 190mm. */
+                margin: 0 auto !important;
+            }
+
+        }
+
+
+            .no-break {
+                break-inside: avoid;
+            }
+
+            body {
+                margin: 0;
+                padding: 0;
+                /* text-transform: capitalize; */
+                font-family: Calibri, "Arial Narrow", Arial, sans-serif;
+            }
+
+            body p {
+                font-family: Calibri, "Arial Narrow", Arial, sans-serif;
+                font-size: 15px;
+            }
+
+            table td,
+            table th {
+                font-family: Calibri, "Arial Narrow", Arial, sans-serif;
+                font-size: 15px;
+                text-align: left;
+                line-height: 1.1;
+            }
+
+            .main_data table {
+                border-collapse: collapse;
+            }
+
+            .reference_value,
+            .main_data .reference_value p,
+            .main_data .reference_value p span {
+                font-size: 12px !important;
+                font-family: Calibri, "Arial Narrow", Arial, sans-serif !important;
+            }
+
+            .pagebreak {
+                page-break-before: always;
+            }
+        }
+
+        /* Let the pasted MS-Word tables keep their own (natural) width instead of
+           being forced to 100%, and drop the Word "margin-left: 5.4pt". Forcing
+           100% + that left margin pushed the table's right edge past the printable
+           area, clipping the right border. max-width keeps a too-wide table inside
+           the page. */
+        .main_data table {
+            max-width: 100% !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+        }
+
+        /* MS-Word tables set border-width/border-color but leave out border-style,
+           so browsers don't draw the borders (they were only showing via the flaky
+           border="1" attribute, which is why some documents lost their borders). Filling
+           in the style makes them render consistently; cells that explicitly use
+           "border: none" keep their inline none and stay borderless. */
+        .main_data table td,
+        .main_data table th {
+            border-style: solid;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        /* ...but a table Word marked border="0" is borderless BY DESIGN and its cells
+           carry no width of their own, so the rule above would turn the CSS initial
+           `medium` (~3px) into a heavy black box, three times thicker than every real
+           grid line beside it. A cell that does declare a width keeps it: Word writes
+           that inline, and inline wins over this rule. */
+        .main_data table[border="0"] td,
+        .main_data table[border="0"] th {
+            border-width: 0;
+        }
+
+        .reference_value *,
+        .main_data .reference_value * {
+            font-size: 12px !important;
+            font-weight: normal !important;
+            font-family: Calibri, "Arial Narrow", Arial, sans-serif !important;
+        }
+
+        .b-0 {
+            border: 0 !important;
+        }
+
+        .p_2 {
+            padding: 2px !important;
+        }
+
+        .inner_bill {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+        }
+
+        .header_section p,
+        .footer_section p {
+            margin: 0;
+        }
+
+        /* Date lines in the header info box stay on one line. */
+        .client_info_box .meta_line {
+            white-space: nowrap;
+        }
+
+        .client_info_box .meta_line,
+        .client_info_box .info_line {
+            margin: 0;
+        }
+
+        .header_section img {
+            max-width: 100% !important;
+            max-height: 100% !important;
+            height: auto !important;
+            width: auto !important;
+            display: block !important;
+            margin: 0 auto !important;
+        }

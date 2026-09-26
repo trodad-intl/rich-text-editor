@@ -1,0 +1,383 @@
+/**
+ * @trodad/rich-text-editor — content.css
+ *
+ * Draws saved editor HTML read-only the way the EDITOR draws it: same base
+ * size, line boxes, table layout, list indents and cell metrics. Use it on a
+ * print page, a PDF template, or anywhere the stored HTML is displayed.
+ *
+ *   <link rel="stylesheet" href=".../content.css">
+ *   <div class="rte-content">…stored HTML…</div>   (sanitize first if the
+ *                                                     HTML is not trusted)
+ *
+ * Load it AFTER the page's own stylesheet — several of these rules win on
+ * source order alone. Nothing outside `.rte-content` is touched.
+ *
+ * WHERE THESE NUMBERS COME FROM. Every value was MEASURED in a real browser
+ * against the mounted editor using the Bootstrap-hardened stylesheet
+ * (rich-text-editor.bootstrap.css) on a Bootstrap 5 page, not read off the
+ * editor's class list: Tailwind emits inside `@layer`, and an unlayered
+ * Bootstrap declaration beats a layered one at any specificity, so for every
+ * property Bootstrap's reboot states for an element, BOOTSTRAP is what the
+ * editor shows. tests/browser/print-parity.spec.ts measures both sides again on
+ * every run and fails on a pixel — change the editor and it tells you what to
+ * change here.
+ *
+ * DELIBERATELY NOT MIRRORED, because it is the editor's FRAME rather than the
+ * document: the editable's own 8px inset, the 6px the table scroll box keeps
+ * clear for a drag handle, the 8px row-control column, the white a cell is
+ * painted, and the pencil guides drawn on a borderless table. And
+ * `white-space: pre-wrap`: the serializer writes spacing out explicitly
+ * (`&nbsp;` and `white-space: pre` spans), so the page renders the same
+ * without it, and WITH it a template's own indentation would print as a
+ * blank line.
+ */
+
+/*
+ * The base every unstyled run falls back to: the preflight `html` rule the
+ * scoping script rewrites onto `.rte-scope`, plus the editable's
+ * `text-[18px] leading-normal [tab-size:8]`.
+ *
+ * A document authored in the editor states its own sizes inline on nearly every
+ * block and span — see lib/block-font-size.ts and lib/inherited-font-size.ts —
+ * so this base only decides text that states nothing, which is exactly where
+ * the two pages used to disagree.
+ *
+ * Declared ON the element, not inherited into it, so `body { font-size: 15px
+ * !important }` above is out of the picture: an inherited value never beats a
+ * declaration on the element itself, important or not. No `text-align` here on
+ * purpose — the editable states none either, so both sides compute `start`.
+ */
+.rte-content {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    font-size: 18px;
+    line-height: 1.5;
+    color: #0a0a0a;
+    -moz-tab-size: 8;
+    tab-size: 8;
+    overflow-wrap: break-word;
+    /*
+     * Print the fills the editor draws.
+     *
+     * A browser leaves BACKGROUNDS out of a print by default — the "Background
+     * graphics" checkbox in the print dialog — while printing text colour
+     * regardless. So a shaded header row, a banded table and a highlighted
+     * line came out white on paper from a document that showed them in colour on
+     * screen, and the loss looked selective: the red heading printed, the grey
+     * band behind it did not. The document states those fills; this prints
+     * them without asking the person at the printer to find a checkbox.
+     *
+     * Paint only. It decides what is coloured, never where anything sits, so
+     * the parity measurements are untouched.
+     */
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+/*
+ * Preflight's `*` rule: no browser default margin or padding anywhere, and a
+ * border box. The box model is not cosmetic — a cell that states a width AND a
+ * padding is that width in total in the editor, and that width PLUS its padding
+ * under a print page's content box, so every column of a pasted table sat a
+ * few pixels wide of where it was drawn.
+ */
+.rte-content *,
+.rte-content *::before,
+.rte-content *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/*
+ * Take the font back from the print stylesheets' blanket declarations.
+ *
+ * `body p { font-size: 15px; font-family: Calibri }` and `table td, table th
+ * { ... }` are element selectors, so they reach INTO the stored HTML and beat
+ * the base above, which is only inherited. A block that states a font of its own
+ * writes it inline and is untouched; one that states nothing now takes the
+ * editor's base, which is the whole point.
+ *
+ * Before the rules that DO set a size (the headings, `code`), so those still win
+ * on source order.
+ */
+.rte-content p,
+.rte-content li,
+.rte-content td,
+.rte-content th {
+    font-family: inherit;
+    font-size: inherit;
+}
+
+/* ParagraphElement's `px-0 py-1 m-0` — both Bootstrap utility names, so both
+   are marked important by the scoping script and both win. The margins a
+   document states on a paragraph inside a table cell are written inline and
+   still beat this; see `extractBlockSpacing` and `blockStyle`. */
+.rte-content p {
+    margin: 0;
+    padding: 4px 0;
+}
+
+/*
+ * Headings are Bootstrap's, except the 4px bottom margin (`.mb-1` collides with
+ * a Bootstrap utility name, so it is important and wins over reboot's .5rem) and
+ * the tracking and bottom padding, which reboot says nothing about.
+ *
+ * The sizes are Bootstrap's responsive ones — `h1 { font-size: calc(1.375rem +
+ * 1.5vw) }` and friends — quoted at their >=1200px settled values, which is what
+ * the editor shows on any ordinary desktop. Below that the editor's h1-h4 shrink
+ * with the WINDOW, which is not something a sheet of A4 can or should follow.
+ */
+.rte-content h1,
+.rte-content h2,
+.rte-content h3,
+.rte-content h4,
+.rte-content h5,
+.rte-content h6 {
+    margin: 0 0 4px;
+    font-weight: 500;
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+}
+
+.rte-content h1 {
+    font-size: 2.5rem;
+    padding-bottom: 4px;
+    letter-spacing: normal;
+}
+
+.rte-content h2 {
+    font-size: 2rem;
+    padding-bottom: 1px;
+}
+
+.rte-content h3 {
+    font-size: 1.75rem;
+    padding-bottom: 1px;
+}
+
+.rte-content h4 {
+    font-size: 1.5rem;
+}
+
+.rte-content h5 {
+    font-size: 1.25rem;
+}
+
+.rte-content h6 {
+    font-size: 1rem;
+}
+
+/*
+ * A list is indented Bootstrap's `ol, ul { padding-left: 2rem }` — NOT the
+ * 1.5rem the editor's `ps-6` asks for, which is layered and loses. The 4px above
+ * and below is `py-1`, which does not lose because Bootstrap owns that name too.
+ *
+ * The marker cascade is components/ui/list-classic-node.tsx's, and the nested
+ * selectors are descendant ones there as well, so bullets stay square from the
+ * third level down instead of cycling and an ordered list stays decimal at every
+ * depth. A list that names its own marker writes it inline and wins.
+ */
+.rte-content ul,
+.rte-content ol {
+    margin: 0;
+    padding: 4px 0 4px 2rem;
+}
+
+.rte-content ul {
+    list-style-type: disc;
+}
+
+.rte-content ul ul {
+    list-style-type: circle;
+}
+
+.rte-content ul ul ul {
+    list-style-type: square;
+}
+
+.rte-content ol {
+    list-style-type: decimal;
+}
+
+.rte-content li {
+    display: list-item;
+}
+
+/* BlockquoteElement: `my-1 border-l-2 pl-6 italic`. Reboot says nothing about a
+   blockquote's padding or border, so all of it applies; preflight's
+   `border: 0 solid` supplies the style and `currentColor`. */
+.rte-content blockquote {
+    margin: 4px 0;
+    padding-left: 24px;
+    border-left: 2px solid currentColor;
+    font-style: italic;
+}
+
+/*
+ * A rule is reboot's 1px `border-top` at 25% — `border-none` and `h-0.5` are
+ * layered and lose — inside HrElement's `py-6` box. 40px is that 24px of box
+ * plus reboot's own 1rem margin, which is what stands above and below it.
+ */
+.rte-content hr {
+    margin: 40px 0;
+    height: 0;
+    /* Preflight's `hr { color: inherit }`. Without it the rule is drawn in the
+       UA's grey rather than the document's ink, because the border below takes
+       its colour from `color`. */
+    color: inherit;
+    border: 0;
+    border-top: 1px solid currentColor;
+    border-radius: 6px;
+    opacity: 0.25;
+}
+
+/* Preflight makes media a block and caps it at its container. The serializer
+   writes the max-width/height pair inline; `display` is the half that only ever
+   came from preflight, so an image printed inline and sat on the text baseline. */
+.rte-content img,
+.rte-content svg,
+.rte-content video,
+.rte-content canvas {
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+
+/* LinkElement. Reboot colours a link, so the editor's `text-primary` is stated
+   important-free and layered — but nothing on this page states a link colour at
+   all, so the editor's is what shows and what is quoted. */
+.rte-content a {
+    color: #171717;
+    font-weight: 500;
+    text-decoration: underline;
+    text-decoration-color: #171717;
+    text-underline-offset: 4px;
+}
+
+/* CodeLeaf, with reboot's font, size and colour and the editor's own tint,
+   padding and line box. */
+.rte-content code {
+    padding: 0.2em 0.3em;
+    border-radius: 8px;
+    background-color: #f5f5f5;
+    color: #d63384;
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.875em;
+    line-height: calc(1.25 / 0.875);
+    white-space: pre-wrap;
+}
+
+/* Reboot's `mark`, which beats HighlightLeaf's `bg-highlight/30`. */
+.rte-content mark {
+    padding: 0.2em;
+    background-color: #fcf8e3;
+    color: inherit;
+}
+
+.rte-content strong {
+    font-weight: 700;
+}
+
+/*
+ * A sub/superscript must not make the line it sits on any taller.
+ *
+ * Reboot gives them `line-height: 0`, which is what keeps `H₂O` and `mm³` on
+ * the same 27px line as the prose around them. The page loads no Bootstrap, so
+ * they fell back to the browser's own `vertical-align: sub` / `super`, and every
+ * line carrying one grew to ~34px — measured 36 in the editor against 42 here.
+ * Not a corner case: a trademark sign such as "Product(TM)" carries one.
+ *
+ * The editor's scoped preflight states exactly the same four declarations, so
+ * this is one of the rare rules where Tailwind and Bootstrap agree and there is
+ * only one value to quote.
+ */
+.rte-content sub,
+.rte-content sup {
+    position: relative;
+    font-size: 75%;
+    line-height: 0;
+    vertical-align: baseline;
+}
+
+.rte-content sub {
+    bottom: -0.25em;
+}
+
+.rte-content sup {
+    top: -0.5em;
+}
+
+/*
+ * TableElement: `table-fixed border-collapse`, its natural width, inside a
+ * scroll box that keeps `pt-2 pb-1` clear. The box's padding is reproduced as
+ * the table's own margin — nothing here collapses with it, since a paragraph
+ * spaces itself with padding.
+ *
+ * `table-layout: fixed` is the one that shows. Under the browser's default
+ * `auto` a column is as wide as its content wants, so a pasted table's own
+ * column widths — the <colgroup> the serializer writes, and the per-cell widths
+ * Word states — were a suggestion, and the printed table came out a different
+ * shape from the one on screen.
+ *
+ * `width: auto` is what makes fixed layout honour them, and it has to be
+ * important: the serializer writes `width: 100%` inline whenever the table node
+ * carries no width of its own, which is every table, because the editor takes
+ * its width from `colSizes` instead. Left at 100% a fixed-layout table spreads
+ * the leftover width across its columns and a 700px table printed 1098px wide.
+ * `max-width` still caps an oversized one, and `fitTablesToPage()` — which
+ * only ever ran on fixed-layout tables, and so until now found none — brings a
+ * table that is genuinely too wide back to the page.
+ */
+.rte-content table {
+    table-layout: fixed;
+    border-collapse: collapse;
+    width: auto !important;
+    max-width: 100%;
+    margin: 8px 0 4px;
+}
+
+/*
+ * TableCellElement. The borders and the gutter are the DOCUMENT's and are
+ * written inline by `serializeCell`; what the editor adds around them is the
+ * middle vertical alignment HTML gives a `<td>`, which it leans on deliberately
+ * (see the note on the content div in components/ui/table-node.tsx).
+ *
+ * `line-height: inherit` and `text-align: inherit` put back what the print
+ * stylesheet's blanket `table td { line-height: 1.1; text-align: left }` took
+ * away. A cell inherits both in the editor — which is how a `<tr align=center>`,
+ * inlined onto the cells by lib/legacy-alignment.ts, reaches the page at all.
+ */
+.rte-content td,
+.rte-content th {
+    line-height: inherit;
+    text-align: inherit;
+    vertical-align: middle;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.rte-content th {
+    text-align: center;
+    font-weight: 700;
+}
+
+/*
+ * `*:data-[slate-node=element]:py-0! *:data-[slate-node=element]:leading-[normal]`
+ * on the cell's content box: a block inside a cell sits as tightly as it did in
+ * the document, without the editor's own paragraph padding, and its line box is
+ * its text's own rather than the 1.5 the stored HTML carries. A block that states
+ * its own line-height still wins, because that value is written inline — which is
+ * why this is not `!important`.
+ */
+.rte-content td>*,
+.rte-content th>* {
+    padding-top: 0;
+    padding-bottom: 0;
+    line-height: normal;
+}
+
+/* A nested table keeps the gap it has anywhere else. */
+.rte-content td>table,
+.rte-content th>table {
+    margin: 8px 0 4px;
+}
