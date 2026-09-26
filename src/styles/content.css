@@ -35,7 +35,7 @@
 /*
  * The base every unstyled run falls back to: the preflight `html` rule the
  * scoping script rewrites onto `.rte-scope`, plus the editable's
- * `text-[18px] leading-normal [tab-size:8]`.
+ * `text-[18px] leading-normal [tab-size:0.5in]`.
  *
  * A document authored in the editor states its own sizes inline on nearly every
  * block and span — see lib/block-font-size.ts and lib/inherited-font-size.ts —
@@ -52,8 +52,9 @@
     font-size: 18px;
     line-height: 1.5;
     color: #0a0a0a;
-    -moz-tab-size: 8;
-    tab-size: 8;
+    /* Word's and LibreOffice's default tab stop, as the editable states it. */
+    -moz-tab-size: 0.5in;
+    tab-size: 0.5in;
     overflow-wrap: break-word;
     /*
      * Print the fills the editor draws.
@@ -71,6 +72,13 @@
      */
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+}
+
+/* A paragraph a LibreOffice paste laid out line by line is spaced by the
+   document instead: ParagraphElement drops `py-1` for it and its margins are
+   written inline. See `extractDocumentSpacing`. */
+.rte-content p[data-spacing="document"] {
+    padding: 0;
 }
 
 /*
