@@ -354,10 +354,12 @@ export const RichTextEditor = React.forwardRef<RichTextEditorHandle, RichTextEdi
             <Editor
               variant="document"
               // A tab is as wide as the distance to the next tab stop, and that
-              // distance is `tab-size` — 8 spaces, as in word processors, print
-              // and PDF renderers. Tailwind's preflight sets 4 here, so pasted
-              // columns lined up one way on screen and another way on paper.
-              className="[tab-size:8]"
+              // distance is `tab-size`: half an inch, Word's and LibreOffice's
+              // default stop. Pasted documents were typed against those stops —
+              // at 8 space-widths (~30px) the columns a document lined up came
+              // apart on paste. content.css states the same, so screen and
+              // paper agree. Tailwind's preflight would otherwise set 4.
+              className="[tab-size:0.5in]"
               placeholder={placeholder}
               spellCheck={spellCheck}
               readOnly={readOnly}
