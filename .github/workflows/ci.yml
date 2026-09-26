@@ -31,14 +31,15 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       # The browser suite measures real text layout of Word/Office content set
-      # in Calibri, Cambria, Arial and Times New Roman. Without these
+      # in Calibri, Cambria, Arial and Times New Roman, against the editor's own
+      # face (Noto Sans in Tailwind's default stack). Without these
       # metric-compatible substitutes a different fallback font is measured and
       # line-height and tab-stop checks drift.
       - name: Install Office metric-compatible fonts
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            fonts-crosextra-carlito fonts-crosextra-caladea fonts-liberation
+            fonts-crosextra-carlito fonts-crosextra-caladea fonts-liberation fonts-noto-core
           fc-cache -f
 
       - run: pnpm test:browser

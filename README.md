@@ -406,7 +406,7 @@ pnpm typecheck
 
 Commits and PR titles follow [Conventional Commits](https://www.conventionalcommits.org) (`feat:`, `fix:`, `docs:`…). PRs are squash-merged into `main`. [release-please](https://github.com/googleapis/release-please) keeps a release PR open with the next version and changelog, and merging it publishes the package to npm with provenance.
 
-**Fonts.** The browser suite measures Office content set in Calibri, Cambria, Arial and Times New Roman. Install their metric-compatible substitutes, or line-height and tab-stop checks will drift: `fonts-crosextra-carlito fonts-crosextra-caladea fonts-liberation` on Debian/Ubuntu (CI does this).
+**Fonts.** The browser suite measures Office content set in Calibri, Cambria, Arial and Times New Roman. It also measures against the editor's own face, Noto Sans. Install Noto Sans and metric-compatible substitutes for the Office fonts, or line-height and tab-stop checks will drift: `fonts-crosextra-carlito fonts-crosextra-caladea fonts-liberation fonts-noto-core` on Debian/Ubuntu (CI does this).
 
 **Why two test suites.** jsdom does no layout, since `getBoundingClientRect()` is all zeros there. So anything about widths, drags, line boxes, fonts or print parity is tested in Playwright against the **built** package, in the most demanding configuration it ships (the Bootstrap-hardened stylesheet on a Bootstrap 5 page). Everything else is unit-tested. `PW_CHANNEL=chrome pnpm test:browser` runs the browser suite in installed Google Chrome instead of Playwright's Chromium.
 
