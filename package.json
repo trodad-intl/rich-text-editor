@@ -118,6 +118,7 @@
     "@udecode/cn": "52.3.4",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
+    "jszip": "^3.10.1",
     "lodash": "4.18.1",
     "lucide-react": "0.482.0",
     "mammoth": "^1.12.2",

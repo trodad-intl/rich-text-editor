@@ -1,5 +1,7 @@
 import { ToolbarButton } from "./ui/toolbar";
 import { openBreakOnlyLines } from "../lib/break-only-lines";
+import { loadDocxClipboard } from "../lib/docx/load-docx";
+import { readDocxAsClipboard, type DocxClipboard } from "../lib/docx/read-docx";
 import { EMPTY_VALUE } from "../lib/html-serializer";
 import { inlineInheritedColor } from "../lib/inherited-color";
 import { inlineInheritedFontSize } from "../lib/inherited-font-size";
@@ -16,10 +18,16 @@ import React, { useCallback, useRef, useState } from "react";
  * "Upload Word (.doc/.docx)" — the Word-import capability many HTML editors
  * offer as an add-on, implemented against Plate.
  *
- * BOTH extensions go to the server route (LibreOffice) first, and that is a
- * deliberate choice over the common approach of converting a .docx in the
- * browser with Mammoth. Mammoth reads a document for its STRUCTURE and throws
- * away everything a document is styled with: the same .docx that gives
+ * A .docx is read in the browser first (lib/docx/read-docx.ts) and loaded
+ * through the PASTE path: the file becomes the clipboard Word would have put on
+ * a copy of the same content, and `insertData` lays it out exactly as it lays
+ * out that paste — tab stops, space runs, colours, sizes, tables, lists. Only if
+ * that reader fails does a .docx go on to the converters below.
+ *
+ * A .doc is binary and goes to the server route (LibreOffice). So does a .docx
+ * the reader could not read, in preference to converting it in the browser
+ * with Mammoth. Mammoth reads a document for its STRUCTURE and throws away
+ * everything a document is styled with: the same .docx that gives
  *
  *   LibreOffice: <p align=center><font color="#ff0000"><font size=4><b>…
  *   Mammoth:     <p><strong>…
@@ -83,6 +91,20 @@ export function WordImportToolbarButton({ convert, url, headers, fieldName = "fi
     });
     return wrap.innerHTML;
   }, []);
+
+  /**
+   * The reader's clipboard, pasted into an emptied document: the same
+   * `insertData` a Ctrl+V of that content out of Word runs, so an uploaded file
+   * and a pasted one come out the same. Like every import, it replaces the
+   * document.
+   */
+  const loadClipboard = useCallback(
+    (clipboard: DocxClipboard, fileName: string) => {
+      loadDocxClipboard(editor, clipboard);
+      setStatus({ kind: "ok", text: `Loaded: ${fileName}` });
+    },
+    [editor]
+  );
 
   const loadHtml = useCallback(
     (html: string, fileName: string, note?: string) => {
@@ -175,6 +197,17 @@ export function WordImportToolbarButton({ convert, url, headers, fieldName = "fi
 
       setStatus({ kind: "busy", text: "Converting…" });
       try {
+        if (isDocx) {
+          const clipboard = await readDocxAsClipboard(await file.arrayBuffer()).catch((error) => {
+            console.warn("Could not read the .docx in the browser; trying the other converters.", error);
+            return null;
+          });
+          if (clipboard) {
+            loadClipboard(clipboard, file.name);
+            return;
+          }
+        }
+
         const converted = await convertOnServer(file);
         if (converted && "html" in converted) {
           loadHtml(converted.html, file.name);
@@ -207,7 +240,7 @@ export function WordImportToolbarButton({ convert, url, headers, fieldName = "fi
         setStatus({ kind: "error", text: "Could not read this Word file." });
       }
     },
-    [convertInBrowser, convertOnServer, loadHtml]
+    [convertInBrowser, convertOnServer, loadClipboard, loadHtml]
   );
 
   return (

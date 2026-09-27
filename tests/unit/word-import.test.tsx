@@ -6,10 +6,16 @@
  * imported BLACK no matter how carefully the rest of this editor preserves
  * colour, and nothing downstream could put back what never arrived. The server
  * route (LibreOffice) states all three in spellings the pipeline reads.
+ *
+ * A real .docx never gets that far: the browser reads it itself and loads it
+ * through the paste path (lib/docx/read-docx.ts, tests/unit/docx-import.test.ts).
+ * The uploads below are a two-byte "PK" the reader cannot read, so they test
+ * what happens after it gives up — which is the order these converters keep.
  */
 import { describe, expect, it, beforeEach, vi } from "vitest";
 import { act } from "react";
 import api, { type MountOptions } from "@/mount";
+import { buildDocx, para, run } from "./support/docx";
 
 const { mammothConvert } = vi.hoisted(() => ({ mammothConvert: vi.fn() }));
 vi.mock("mammoth", () => ({
@@ -34,15 +40,19 @@ function mount(options: Partial<MountOptions> = {}) {
   });
 }
 
-async function upload(fileName: string) {
+async function upload(fileName: string, contents: BlobPart = "PK") {
   const input = document.querySelector<HTMLInputElement>('input[type="file"]')!;
-  const file = new File(["PK"], fileName);
+  const file = new File([contents], fileName);
   Object.defineProperty(input, "files", { value: [file], configurable: true });
   await act(async () => {
     input.dispatchEvent(new Event("change", { bubbles: true }));
   });
-  // The conversion and the load that follows it are both promises.
-  await act(async () => {});
+  // The reading, the conversion and the load that follows are all promises:
+  // wait for the button to say it is done, not a fixed number of ticks.
+  await vi.waitFor(async () => {
+    await act(async () => {});
+    expect(document.body.textContent).not.toContain("Converting");
+  });
 }
 
 function serverReturning(html: string) {
@@ -50,13 +60,35 @@ function serverReturning(html: string) {
 }
 
 describe("uploading a Word file", () => {
+  it("reads a real .docx in the browser, with no server and no Mammoth", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    try {
+      const docx = await buildDocx({
+        body: para(run("MOLECULAR BIOLOGY REPORT", `<w:b/><w:color w:val="FF0000"/><w:sz w:val="32"/>`), `<w:jc w:val="center"/>`),
+      });
+      await mount({ wordImport: { url: "/tools/word-to-html" } });
+      await upload("report.docx", docx);
+
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(mammothConvert).not.toHaveBeenCalled();
+      const html = api.getHtml("#content_editor");
+      expect(html).toContain("MOLECULAR BIOLOGY REPORT");
+      expect(html).toContain("color: rgb(255, 0, 0)");
+      expect(html).toContain("font-size: 16pt");
+      expect(html).toContain("text-align: center");
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   beforeEach(() => {
     document.body.innerHTML = "";
     mammothConvert.mockReset();
     mammothConvert.mockResolvedValue({ value: MAMMOTH_HTML, messages: [] });
   });
 
-  it("sends a .docx to LibreOffice, which is the converter that keeps the colour", async () => {
+  it("sends a .docx the browser cannot read to LibreOffice, which keeps the colour", async () => {
     const fetchMock = serverReturning(LIBREOFFICE_HTML);
     vi.stubGlobal("fetch", fetchMock);
 
