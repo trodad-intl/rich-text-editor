@@ -71,6 +71,25 @@ test.describe("Tab at the caret", () => {
     expect(html).toMatch(/<td[^>]*><p>[^<]+<span style="white-space: pre">\t<\/span>/);
   });
 
+  // As Word does: a selection within one line is replaced by the tab, where it
+  // used to indent the whole line from its start.
+  test("a Tab over a selected word replaces the word, not the line's indent", async ({ page }) => {
+    const html = await press(page, "<p>Findings of the study</p>", PARA, 9, [
+      "Shift+ArrowRight",
+      "Shift+ArrowRight",
+      "Tab",
+    ]);
+    expect(html).toBe(`<p>Findings ${TAB} the study</p>`);
+  });
+
+  test("a Tab over a run of spaces turns the spaces into a tab", async ({ page }) => {
+    const html = await press(page, "<p>Name&nbsp; &nbsp; &nbsp;Value</p>", PARA, 4, [
+      ...Array(5).fill("Shift+ArrowRight"),
+      "Tab",
+    ]);
+    expect(html).toBe(`<p>Name${TAB}Value</p>`);
+  });
+
   // One span, two tabs: the serializer wraps a RUN of whitespace, not each
   // character. See lib/whitespace.ts.
   test("two of them make two tabs", async ({ page }) => {
@@ -98,12 +117,13 @@ test.describe("Tab still reaches the plugins underneath", () => {
     expect(html).toBe('<p style="margin-left: 36pt">Indented line</p>');
   });
 
-  test("Tab over a selection indents rather than eating the selected text", async ({ page }) => {
-    const html = await press(page, "<p>Findings of the study</p>", PARA, 0, [
-      "Shift+ArrowRight",
-      "Shift+ArrowRight",
+  test("Tab over a selection across lines still indents those lines", async ({ page }) => {
+    const html = await press(page, "<p>Findings of the study</p><p>Second line</p>", PARA, 0, [
+      "Shift+ArrowDown",
       "Tab",
     ]);
-    expect(html).toBe('<p style="margin-left: 36pt">Findings of the study</p>');
+    expect(html).toBe(
+      '<p style="margin-left: 36pt">Findings of the study</p><p style="margin-left: 36pt">Second line</p>'
+    );
   });
 });

@@ -16,12 +16,15 @@ import { createSlatePlugin, KEYS } from "platejs";
  *    document pasted from Word with real indentation can still be flattened.
  *  - A list item, where Tab nests the item under the one above it. That is what
  *    Tab means in every editor and nobody asked for it back.
- *  - An EXPANDED selection, which still indents the block. Inserting there would
- *    do what typing any other character does — replace the selected text — and
- *    Tab is not a character anyone means to type over a selection. It also
- *    leaves a way to indent a block from the keyboard.
+ *  - A selection ACROSS lines, which still indents those blocks — the way left
+ *    to indent a block from the keyboard.
  * All three fall through to the override chain — the list plugin's `tab`, then
  * the indent plugin's — so those keep whatever behaviour they shipped with.
+ *
+ * A selection WITHIN one line is replaced by the tab, as Word does: select the
+ * run of spaces a value was lined up with, press Tab, and the spaces become a
+ * tab. It used to indent the whole block like the cross-line case, so a word
+ * or a gap selected part-way along moved the line from its start instead.
  *
  * Registered AFTER IndentKit in `plugins.ts`, which is what puts this override
  * outermost: `overrideEditor` wraps what is already there, so the plugin that
@@ -41,11 +44,13 @@ export const TabAtCursorPlugin = createSlatePlugin({
     // what made it unassignable when passed straight back down.
     tab(options) {
       if (options.reverse) return tab(options);
-      if (!editor.selection || editor.api.isExpanded()) return tab(options);
+      if (!editor.selection) return tab(options);
+      if (editor.api.isExpanded() && !editor.api.isAt({ block: true })) return tab(options);
       if (editor.api.above({ match: { type: editor.getType(KEYS.li) } })) {
         return tab(options);
       }
 
+      // Over a selection, `insertText` deletes it first.
       editor.tf.insertText("\t");
 
       return true;
