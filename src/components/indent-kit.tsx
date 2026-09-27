@@ -19,14 +19,14 @@ export const IndentKit = [
       /**
        * One indent level, in px — and it has to be the SERIALIZER's number.
        *
-       * `blockStyle` writes `margin-left: indent * 40px` (lib/html-serializer.ts)
-       * and the deserializer reads a level back at the same 40px, so a document
-       * round-trips unchanged. This is only what the editor DRAWS, and at 24 it
-       * drew every indent a little under two-thirds of the width the same
-       * document printed at. Measured: levels 1/2/3 rendered 24/48/72px against
-       * the stored — and printed — 40/80/120px.
+       * `blockStyle` writes `margin-left: indent * 36pt` (lib/html-serializer.ts),
+       * which is 48px: half an inch, Word's indent step and the editable's
+       * `tab-size`. On that grid a tab in an indented line lands on the stop
+       * Word puts it on; at 40px it landed 40px further along. This is only
+       * what the editor DRAWS, and at 24 it drew every indent a little under
+       * two-thirds of the width the same document printed at.
        */
-      offset: 40,
+      offset: 48,
     },
   }),
 ];

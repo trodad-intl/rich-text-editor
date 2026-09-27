@@ -1,4 +1,5 @@
 import { ToolbarButton } from "./ui/toolbar";
+import { openBreakOnlyLines } from "../lib/break-only-lines";
 import { EMPTY_VALUE } from "../lib/html-serializer";
 import { inlineInheritedColor } from "../lib/inherited-color";
 import { inlineInheritedFontSize } from "../lib/inherited-font-size";
@@ -111,7 +112,7 @@ export function WordImportToolbarButton({ convert, url, headers, fieldName = "fi
           )
         )
       );
-      const value = deserializeHtml(editor, { element: prepared }) as Value;
+      const value = openBreakOnlyLines(deserializeHtml(editor, { element: prepared }) as Value);
       editor.tf.setValue(value.length ? value : EMPTY_VALUE);
       setStatus({ kind: "ok", text: `Loaded: ${fileName}${note ? ` — ${note}` : ""}` });
     },

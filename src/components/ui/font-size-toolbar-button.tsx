@@ -36,7 +36,7 @@ import { ToolbarButton } from "./toolbar";
  * lib/font-size.ts owns the conversion and the reasoning.
  */
 
-/** The editor's own text size, as this control names it: `text-[18px]` = 13.5pt. */
+/** The editor's own text size, as this control names it: `text-[11pt]`. */
 const DEFAULT_FONT_SIZE = formatFontSizeNumber(BASE_FONT_PT);
 
 /**

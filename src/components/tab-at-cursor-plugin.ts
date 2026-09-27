@@ -5,8 +5,8 @@ import { createSlatePlugin, KEYS } from "platejs";
  *
  * `@platejs/indent` overrides `editor.tf.tab` to move the BLOCK: it sets
  * `indent` on the paragraph, which the serializer writes as `margin-left:
- * indent * 40px`. So the caret's position made no difference — a Tab pressed in
- * the middle of `Total amount due` moved the whole line 40px right and left
+ * indent * 36pt`. So the caret's position made no difference — a Tab pressed in
+ * the middle of `Total amount due` moved the whole line 48px right and left
  * the text untouched, which is not what a tab is for in a document. Documents
  * are full of lines that line a value up with a tab stop part-way along, and
  * typing one was impossible.

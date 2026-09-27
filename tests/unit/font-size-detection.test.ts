@@ -152,9 +152,9 @@ describe("spellings that are not CSS font-size at all", () => {
   });
 
   it("resolves the relative keywords against the base, as it does em", () => {
-    // One step of 1.2 off 13.5pt.
-    expect(detectedSize(`<p><span style="font-size:smaller">T</span></p>`)).toBe("11.25pt");
-    expect(detectedSize(`<p><span style="font-size:larger">T</span></p>`)).toBe("16.2pt");
+    // One step of 1.2 off 11pt.
+    expect(detectedSize(`<p><span style="font-size:smaller">T</span></p>`)).toBe("9.17pt");
+    expect(detectedSize(`<p><span style="font-size:larger">T</span></p>`)).toBe("13.2pt");
   });
 
   it("still ignores what names no size", () => {

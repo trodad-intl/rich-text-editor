@@ -4,6 +4,7 @@ import { BasicMarksKit } from "./components/basic-marks-kit";
 import { BlockBackgroundPlugin } from "./components/block-background-plugin";
 import { BlockFontSizePlugin } from "./components/block-font-size-plugin";
 import { BlockSpacingPlugin } from "./components/block-spacing-plugin";
+import { BreakOnlyLinePlugin } from "./components/break-only-line-plugin";
 import { ClipboardPicturePlugin } from "./components/clipboard-picture-plugin";
 import { DocxKit } from "./components/docx-kit";
 import { FontFacePlugin, RtfParagraphFontPlugin } from "./components/font-face-plugin";
@@ -148,5 +149,8 @@ export function buildPlugins(pasteMode: PasteMode = "clean") {
     // any document states, it is one this editor has to work out.
     // See lib/block-font-size.ts.
     BlockFontSizePlugin,
+    // A pasted `<p><br></p>` is one blank line, not two. See
+    // lib/break-only-lines.ts.
+    BreakOnlyLinePlugin,
   ];
 }

@@ -109,7 +109,11 @@ export function isPlateValueEmpty(value: Value | null | undefined): boolean {
 function blockStyle(node: any): string {
   const parts: string[] = [];
   if (node.align) parts.push(`text-align: ${node.align}`);
-  if (node.indent) parts.push(`margin-left: ${Number(node.indent) * 40}px`);
+  // Half an inch a level, Word's own indent step, so a tab in an indented line
+  // lands on the same stop it does in Word. Written in POINTS on purpose: the
+  // docx parser reads a level back as the bare number over 36 whatever its unit,
+  // so `36pt` a level round-trips exactly where `48px` would drift a level up.
+  if (node.indent) parts.push(`margin-left: ${Number(node.indent) * 36}pt`);
   if (node.lineHeight) parts.push(`line-height: ${node.lineHeight}`);
   // The space above and below a paragraph in a table CELL, which is most of a
   // row's height — see `extractBlockSpacing` — and on a paragraph a LibreOffice

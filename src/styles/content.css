@@ -35,7 +35,7 @@
 /*
  * The base every unstyled run falls back to: the preflight `html` rule the
  * scoping script rewrites onto `.rte-scope`, plus the editable's
- * `text-[18px] leading-normal [tab-size:0.5in]`.
+ * `text-[11pt] leading-normal [tab-size:0.5in]`.
  *
  * A document authored in the editor states its own sizes inline on nearly every
  * block and span — see lib/block-font-size.ts and lib/inherited-font-size.ts —
@@ -49,7 +49,7 @@
  */
 .rte-content {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-    font-size: 18px;
+    font-size: 11pt;
     line-height: 1.5;
     color: #0a0a0a;
     /* Word's and LibreOffice's default tab stop, as the editable states it. */

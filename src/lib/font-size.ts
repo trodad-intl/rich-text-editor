@@ -81,13 +81,12 @@ const RELATIVE_KEYWORD: Record<string, number> = {
 };
 
 /**
- * The editor's own text size, in points — `text-[18px]` on the `document`
- * variant in components/ui/editor.tsx, which is 13.5pt EXACTLY (13.5 x 96/72 =
- * 18). Both statements describe the same rendering; this one is on the scale
- * the control reads in, so an unsized run is named honestly instead of being
- * called 18.
+ * The editor's own text size, in points — `text-[11pt]` on the `document`
+ * variant in components/ui/editor.tsx, Word's default body size. Both
+ * statements describe the same rendering; this one is on the scale the control
+ * reads in, so an unsized run is named by the number Word would show.
  */
-export const BASE_FONT_PT = 13.5;
+export const BASE_FONT_PT = 11;
 
 /**
  * Sizes outside this range are a broken document, not a design decision.
@@ -204,8 +203,8 @@ export function pointsToFontSize(pt: number): string {
  *
  * Plate's own `toUnitLess` cannot do this and not only because of the unit: it
  * matches the FIRST RUN OF DIGITS (`/\d+/`), so it reads `13.5pt` back as "13"
- * and `11.25pt` as "11". A control that cannot show a fraction cannot show the
- * editor's own base size, which is 13.5pt.
+ * and `11.25pt` as "11". A control that cannot show a fraction cannot show a
+ * 10.5pt run, or a legacy `15px` one.
  */
 export function fontSizeLabel(raw: unknown, fallbackPt: number = BASE_FONT_PT): string {
   return formatFontSizeNumber(fontSizeToPt(raw) ?? fallbackPt);

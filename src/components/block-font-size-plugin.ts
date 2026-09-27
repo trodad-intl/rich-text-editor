@@ -2,7 +2,7 @@
 
 import { createSlatePlugin, type NodeEntry, type SlateEditor, type TElement } from "platejs";
 
-import { blockFontSize } from "../lib/block-font-size";
+import { blockFontSize, isBlankLine } from "../lib/block-font-size";
 
 /**
  * Give every paragraph the size its own text is set in, and take it away again
@@ -21,6 +21,43 @@ import { blockFontSize } from "../lib/block-font-size";
  * and consecutive blank lines take their size from the one above.
  */
 function sizeBlocks(editor: SlateEditor): boolean {
+  const resized = eachParagraph(editor, (node, previous, next, at) => {
+    const fontSize = blockFontSize(node, previous, next);
+    if (fontSize === (node as { fontSize?: string }).fontSize) return false;
+    editor.tf.setNodes({ fontSize } as Partial<TElement>, { at });
+    return true;
+  });
+  if (resized) return true;
+
+  // A blank line's size goes on its empty run as well — the state Enter leaves
+  // one in — because the run is what the toolbar reads and what typing
+  // continues. With it only on the block, a blank line between two 12pt lines
+  // drew 12pt tall but named itself the editor's base, and the text typed on it
+  // came out at that base. Word's blank paragraph keeps its size on its
+  // paragraph mark and types in it.
+  //
+  // Only once every block has SETTLED: a run's size is the line's own from then
+  // on, so writing one mid-way would freeze an answer read off a sibling that
+  // had not been sized yet — the last of three blank lines between 10px and
+  // 30px text kept the 30px it was given on the first pass.
+  return eachParagraph(editor, (node, _previous, _next, at) => {
+    const fontSize = (node as { fontSize?: string }).fontSize;
+    if (!fontSize || !isBlankLine(node)) return false;
+    let marked = false;
+    (node.children as { fontSize?: string }[]).forEach((run, j) => {
+      if (run.fontSize) return;
+      editor.tf.setNodes({ fontSize } as Partial<TElement>, { at: [...at, j] });
+      marked = true;
+    });
+    return marked;
+  });
+}
+
+/** Every paragraph, with its neighbours; true when `apply` changed any. */
+function eachParagraph(
+  editor: SlateEditor,
+  apply: (node: TElement, previous: TElement | undefined, next: TElement | undefined, at: number[]) => boolean
+): boolean {
   let changed = false;
 
   const visit = (children: readonly TElement[], path: number[]) => {
@@ -29,11 +66,7 @@ function sizeBlocks(editor: SlateEditor): boolean {
       if (!node || !Array.isArray(node.children)) continue;
 
       if (node.type === "p") {
-        const fontSize = blockFontSize(node, children[i - 1], children[i + 1]);
-        if (fontSize !== (node as { fontSize?: string }).fontSize) {
-          editor.tf.setNodes({ fontSize } as Partial<TElement>, { at: [...path, i] });
-          changed = true;
-        }
+        if (apply(node, children[i - 1], children[i + 1], [...path, i])) changed = true;
         continue;
       }
 
@@ -48,6 +81,9 @@ function sizeBlocks(editor: SlateEditor): boolean {
   return changed;
 }
 
+/** More passes than any document needs to settle; a guard, not a budget. */
+const MAX_INITIAL_PASSES = 100;
+
 /**
  * Runs on the EDITOR node rather than on each paragraph: a blank line is sized
  * from the lines around it, a paragraph cannot see its neighbours, and editing
@@ -55,12 +91,14 @@ function sizeBlocks(editor: SlateEditor): boolean {
  * which is exactly the pass this needs.
  *
  * `normalizeInitialValue` covers opening a document: Plate only force-normalizes
- * at init when asked to, and this editor does not ask.
+ * at init when asked to, and this editor does not ask. It repeats the pass
+ * itself until nothing changes, as the root normalization does, so a blank
+ * line's run is sized before anyone puts a caret on it.
  */
 export const BlockFontSizePlugin = createSlatePlugin({
   key: "blockFontSize",
   normalizeInitialValue: ({ editor }) => {
-    sizeBlocks(editor);
+    for (let pass = 0; pass < MAX_INITIAL_PASSES && sizeBlocks(editor); pass++);
   },
   extendEditor: ({ editor }) => {
     const originalNormalizeNode = editor.normalizeNode as (entry: NodeEntry) => void;

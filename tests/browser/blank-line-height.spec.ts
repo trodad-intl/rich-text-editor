@@ -69,7 +69,7 @@ test.describe("a blank line between sized text, on the way in", () => {
 test("an unsized document keeps the editor base", async ({ page }) => {
   await open(page, "<p>plain</p>" + BLANK + "<p>more</p>");
   const [, blank] = await lines(page);
-  expect(blank.fontSize).toBe("18px");
+  expect(blank.fontSize).toBe("14.6667px"); // 11pt
 });
 
 test.describe("typing: Enter after sized text, and the toolbar aimed at a blank line", () => {
@@ -125,5 +125,42 @@ test.describe("typing: Enter after sized text, and the toolbar aimed at a blank 
     await enterAfterTen(page);
     await setThirtySix(page);
     expect(await getHtml(page)).toContain('<p style="font-size: 36pt">');
+  });
+});
+
+// A blank line in an OPENED document, between two 12pt lines. It used to be
+// sized on its block only — drawn 12pt tall while the toolbar named the base and
+// typing came out at it — and `<p><br/></p>` read back as a break, two lines
+// tall. Word's blank paragraph is one line, and it types in its own size.
+test.describe("a blank line in an opened document", () => {
+  const TWELVE = (text: string) => `<p><span style="font-size: 12pt">${text}</span></p>`;
+  const DOC = TWELVE("One") + BLANK + TWELVE("Two");
+
+  async function caretOnBlank(page: Page) {
+    await open(page, DOC);
+    await page.click("[data-slate-editor] > div >> nth=1");
+    await page.waitForTimeout(150);
+  }
+
+  test("is one line, as tall as the text beside it", async ({ page }) => {
+    await open(page, DOC);
+    const [one, blank] = await lines(page);
+    expect(blank.height).toBe(one.height);
+  });
+
+  test("the toolbar names its size, not the editor's base", async ({ page }) => {
+    await caretOnBlank(page);
+    expect(await page.inputValue('input[data-plate-focus="true"]')).toBe("12");
+  });
+
+  test("text typed on it comes out in that size, on that one line", async ({ page }) => {
+    await caretOnBlank(page);
+    await page.keyboard.type("abc");
+    await page.waitForTimeout(200);
+    const [one, typed] = await lines(page);
+    expect(typed.text).toBe("abc");
+    expect(typed.fontSize).toBe("16px");
+    expect(typed.height).toBe(one.height);
+    expect(await getHtml(page)).toContain('<span style="font-size: 12pt">abc</span>');
   });
 });

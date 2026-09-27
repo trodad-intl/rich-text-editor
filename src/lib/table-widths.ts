@@ -664,7 +664,7 @@ function isLastBlockInCell(el: Element, cell: Element): boolean {
  * reach it.
  *
  * Only the vertical sides. `margin-left` is how this editor states INDENT (the
- * serializer writes `indent * 40px` into it), and Word's own left margins on a
+ * serializer writes `indent * 36pt` into it), and Word's own left margins on a
  * paragraph are the same thing said differently — not spacing between rows.
  */
 export function extractBlockSpacing(el: Element): BlockSpacing | undefined {

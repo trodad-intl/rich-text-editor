@@ -57,6 +57,23 @@ describe("legacy HTML", () => {
     expect(html).toContain("text-align: center");
   });
 
+  // Half an inch a level, Word's step, so a tab in an indented line lands on
+  // Word's stop. In points because the docx parser reads a level back as the
+  // bare number over 36: `96px` would reopen a level deeper than it was saved.
+  it("keeps every indent level, at half an inch a level", () => {
+    for (let level = 1; level <= 8; level++) {
+      const saved = `<p style="margin-left: ${level * 36}pt">Indented</p>`;
+      expect(roundTrip(saved).html).toBe(saved);
+    }
+  });
+
+  it("opens a document saved at the old 40px step at the same level", () => {
+    for (const level of [1, 2, 3, 4]) {
+      const { html } = roundTrip(`<p style="margin-left: ${level * 40}px">Indented</p>`);
+      expect(html).toBe(`<p style="margin-left: ${level * 36}pt">Indented</p>`);
+    }
+  });
+
   it("keeps headings and blockquotes", () => {
     const { html } = roundTrip("<h2>Findings</h2><blockquote>Note</blockquote>");
     expect(html).toContain("<h2");

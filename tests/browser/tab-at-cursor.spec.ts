@@ -2,8 +2,8 @@
  * Where does Tab put a tab?
  *
  * At the caret. `@platejs/indent` binds Tab to move the whole BLOCK — it sets
- * `indent`, which the serializer writes as `margin-left: indent * 40px` — so a
- * Tab pressed in the middle of a line moved the line 40px right and left the
+ * `indent`, which the serializer writes as `margin-left: indent * 36pt` — so a
+ * Tab pressed in the middle of a line moved the line 48px right and left the
  * text alone. A document is full of lines that put a value on a tab stop part-way
  * along, and typing one was impossible.
  *
@@ -95,7 +95,7 @@ test.describe("Tab still reaches the plugins underneath", () => {
     const html = await press(page, '<p style="margin-left: 80px">Indented line</p>', PARA, 3, [
       "Shift+Tab",
     ]);
-    expect(html).toBe('<p style="margin-left: 40px">Indented line</p>');
+    expect(html).toBe('<p style="margin-left: 36pt">Indented line</p>');
   });
 
   test("Tab over a selection indents rather than eating the selected text", async ({ page }) => {
@@ -104,6 +104,6 @@ test.describe("Tab still reaches the plugins underneath", () => {
       "Shift+ArrowRight",
       "Tab",
     ]);
-    expect(html).toBe('<p style="margin-left: 40px">Findings of the study</p>');
+    expect(html).toBe('<p style="margin-left: 36pt">Findings of the study</p>');
   });
 });

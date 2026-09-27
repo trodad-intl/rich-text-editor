@@ -170,9 +170,9 @@ describe("font size conversion", () => {
   });
 
   it("resolves a relative size against the editor's own text size", () => {
-    // `text-[18px]` on the document variant, which is 13.5pt exactly.
-    expect(toPtFontSize("1em")).toBe("13.5pt");
-    expect(toPtFontSize("150%")).toBe("20.25pt");
+    // `text-[11pt]` on the document variant.
+    expect(toPtFontSize("1em")).toBe("11pt");
+    expect(toPtFontSize("150%")).toBe("16.5pt");
   });
 
   it("resolves CSS's size keywords rather than dropping them", () => {
@@ -181,7 +181,7 @@ describe("font size conversion", () => {
     // left the run at the editor's base, which is a size nobody chose. See
     // tests/unit/font-size-detection.test.ts for the whole matrix.
     expect(toPtFontSize("medium")).toBe("16px");
-    expect(toPtFontSize("smaller")).toBe("11.25pt");
+    expect(toPtFontSize("smaller")).toBe("9.17pt");
   });
 
   it("rejects what names no size at all", () => {
@@ -207,10 +207,11 @@ describe("naming a size on the control's scale", () => {
     expect(fontSizeLabel("12px")).toBe("9");
   });
 
-  it("names the editor's own base, which no whole number can", () => {
+  it("names the editor's own base, and a fraction Plate's reader would cut short", () => {
     // Plate's `toUnitLess` matches the first run of digits, so it reads 13.5pt
-    // back as "13" — a control using it cannot show the base size at all.
-    expect(fontSizeLabel(undefined)).toBe("13.5");
+    // back as "13" — a control using it cannot show a fractional size at all.
+    expect(fontSizeLabel(undefined)).toBe("11");
+    expect(fontSizeLabel("13.5pt")).toBe("13.5");
     expect(toUnitLess("13.5pt")).toBe("13");
   });
 });

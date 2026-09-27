@@ -42,7 +42,7 @@ export function ParagraphElement(props: PlateElementProps) {
       // An INDENT is the same trap on the other axis, and it was missed. Plate's
       // IndentPlugin states the level as an inline `margin-left`, so `.m-0` beat
       // that too and an indented paragraph drew FLAT — while the serializer wrote
-      // `margin-left: indent * 40px` all along, so the document saved and printed
+      // `margin-left: indent * 36pt` all along, so the document saved and printed
       // with an indentation the author was never shown. Measured before the fix:
       // three paragraphs at levels 1/2/3 all computed `margin-left: 0px`.
       //

@@ -4,6 +4,7 @@
  * converters in src/convert.ts.
  */
 import { deserializeHtml, KEYS, type SlateEditor, type Value } from "platejs";
+import { openBreakOnlyLines } from "./break-only-lines";
 import { EMPTY_VALUE } from "./html-serializer";
 import { inlineInheritedColor } from "./inherited-color";
 import { inlineInheritedFontSize } from "./inherited-font-size";
@@ -88,7 +89,8 @@ export function toRenderableValue(editor: SlateEditor, value: Value): Value {
 export function deserializeDocument(editor: SlateEditor, html?: string): Value {
   if (!html || !html.trim()) return EMPTY_VALUE;
 
-  return toRenderableValue(editor, deserializeHtml(editor, { element: prepareHtml(html) }) as Value);
+  const value = deserializeHtml(editor, { element: prepareHtml(html) }) as Value;
+  return toRenderableValue(editor, openBreakOnlyLines(value));
 }
 
 /**

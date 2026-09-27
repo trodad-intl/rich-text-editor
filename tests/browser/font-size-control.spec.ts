@@ -181,9 +181,9 @@ test("setting a size writes points, and ± steps by a whole point", async ({
   expect
     .soft(
       base,
-      "an unsized run is named 13.5 — the editable's own 18px, in points",
+      "an unsized run is named 11 — the editable's own 11pt",
     )
-    .toBe("13.5");
+    .toBe("11");
 
   await page.fill(BOX, "12");
   await page.keyboard.press("Enter");

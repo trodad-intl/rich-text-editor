@@ -154,7 +154,9 @@ describe("inside a table cell, which is where this was asked for", () => {
 describe("the saved HTML carries the gap", () => {
   it("states the size on the blank <p>, which is what prints it", () => {
     const { html } = roundTrip(TEN + BLANK);
-    expect(html).toContain('<p style="font-size: 10px"><br/></p>');
+    // On its run as well, the form a blank line made with Enter saves in — and
+    // the one the next test needs to reopen at the same size.
+    expect(html).toContain('<p style="font-size: 10px"><span style="font-size: 10px"><br/></span></p>');
   });
 
   it("keeps a deliberately sized blank line on reopening", () => {

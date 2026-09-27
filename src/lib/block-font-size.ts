@@ -57,8 +57,8 @@ const TEXT_BLOCKS: ReadonlySet<string> = new Set([
  * Newlines only. A line of tabs or of spaces is a line the document lays out
  * with (see lib/whitespace.ts), and a run of spaces is as wide as the size it
  * is set in, so resizing one would move the columns it aligns. The two forms that do count
- * are `""` — a line made with Enter — and `"\n"`, which is how a saved
- * `<p><br/></p>` reads back.
+ * are `""` — a line made with Enter, and a saved `<p><br/></p>` reopened (see
+ * lib/break-only-lines.ts) — and `"\n"`, Shift+Enter on an empty line.
  */
 const BLANK_TEXT = /^\n*$/;
 
@@ -126,7 +126,7 @@ function agreedFontSize(node: TElement, skipEmpty: boolean): string | undefined 
  * The size a blank line states for itself.
  *
  * A line made with Enter holds one empty run carrying the size that was being
- * typed in; a saved one reopens as a run of `"\n"` carrying it. So ask the runs
+ * typed in; a saved one reopens as an empty run carrying it. So ask the runs
  * that have something in them first, and fall back to the empty ones, which on
  * a blank line are the only ones there are.
  */

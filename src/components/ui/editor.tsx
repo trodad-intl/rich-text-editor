@@ -87,7 +87,7 @@ const editorVariants = cva(
         default: "size-full px-16 pt-4 pb-72 text-base sm:px-[max(64px,calc(50%-350px))]",
         demo: "size-full px-16 pt-4 pb-72 text-base sm:px-[max(64px,calc(50%-350px))]",
         fullWidth: "size-full px-16 pt-4 pb-72 text-base sm:px-24",
-        document: "size-full px-2 py-2 text-[18px] leading-normal",
+        document: "size-full px-2 py-2 text-[11pt] leading-normal",
         none: "",
         select: "px-3 py-2 text-base data-readonly:w-fit",
       },
