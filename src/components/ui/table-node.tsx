@@ -13,6 +13,7 @@ import {
   useTableBordersDropdownMenuContentState,
   useTableCellElement,
   useTableCellElementResizable,
+  useTableColSizes,
   useTableElement,
   useTableMergeState,
 } from "@platejs/table/react";
@@ -120,7 +121,13 @@ export const TableElement = withHOC(
 
     // What the columns add up to. `colSizes` is the only place a table's widths
     // live, and every table that arrives by paste or import has them.
-    const colSizes = (props.element.colSizes as number[] | undefined) ?? [];
+    //
+    // WITH the drag's overrides: while a border is being dragged Plate holds
+    // the new widths there and writes them into the node only on release. Read
+    // off the node, the <colgroup> below kept the old widths for the whole drag
+    // and the border lagged the mouse — about 70% of the distance, measured —
+    // then jumped to it on release.
+    const colSizes = useTableColSizes();
     const naturalWidth = colSizes.reduce(
       (total, size) => total + (Number.isFinite(size) ? size : 0),
       0
@@ -646,15 +653,11 @@ export function TableCellElement({
     key: KEYS.tr,
   });
   // What every column of this table adds up to, so a cell can state its width
-  // as a SHARE of the table rather than a fixed number of pixels.
-  const tableWidth: number = useElementSelector(
-    ([node]) =>
-      (((node as { colSizes?: number[] }).colSizes ?? []) as number[]).reduce(
-        (total, size) => total + (Number.isFinite(size) ? size : 0),
-        0
-      ),
-    [],
-    { key: KEYS.table }
+  // as a SHARE of the table rather than a fixed number of pixels. With the
+  // drag's overrides, as the table's <colgroup> reads them — see TableElement.
+  const tableWidth = useTableColSizes().reduce(
+    (total, size) => total + (Number.isFinite(size) ? size : 0),
+    0
   );
   const isSelectingTable = useBlockSelected(tableId);
   const isSelectingRow = useBlockSelected(rowId) || isSelectingTable;

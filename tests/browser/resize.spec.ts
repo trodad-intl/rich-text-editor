@@ -116,3 +116,29 @@ test("dragging column 0's border resizes the pair and persists", async ({ page }
   // The legacy script printed these without failing on them; so does this.
   if (errors.length) test.info().annotations.push({ type: "browser errors", description: errors.join("\n") });
 });
+
+// The border has to be where the mouse is WHILE the drag is on, not only once
+// it is released: the <colgroup> read the node's widths, which Plate updates
+// on release, so the border lagged the mouse by ~30% and then jumped to it.
+test("the border follows the mouse during the drag, not only on release", async ({ page }) => {
+  await open(page);
+  const edge = () =>
+    cells(page)
+      .first()
+      .evaluate((el) => el.getBoundingClientRect().right);
+  const box = await handle(page).boundingBox();
+  expect(box, "resize handle has a hit area").not.toBeNull();
+  const x0 = box!.x + box!.width / 2;
+  const y = box!.y + box!.height / 2;
+  const start = await edge();
+
+  await page.mouse.move(x0, y);
+  await page.mouse.down();
+  for (const dx of [20, 40, 60, -30]) {
+    await page.mouse.move(x0 + dx, y, { steps: 4 });
+    await page.waitForTimeout(50);
+    const moved = (await edge()) - start;
+    expect.soft(Math.abs(moved - dx), `mouse moved ${dx}px, border moved ${moved.toFixed(1)}px`).toBeLessThanOrEqual(2);
+  }
+  await page.mouse.up();
+});
