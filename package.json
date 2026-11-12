@@ -1,6 +1,6 @@
 {
   "name": "@trodad/rich-text-editor",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "A Plate-based rich text editor that reads and writes HTML or Plate JSON, and takes a paste from Word, Excel or LibreOffice without losing tables, fonts or spacing. Works as a React component, an HTML form element, or a script-tag mount for server-rendered pages.",
   "keywords": [
     "rich-text-editor",
